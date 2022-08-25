@@ -25,6 +25,21 @@ const mostBlogs = (blogs) => {
   };
 };
 
+const mostLikes = (blogs) => {
+  return blogs
+    .reduce((acc, current) => {
+      const existingAuthor = acc.find((blog) => blog.author === current.author);
+
+      if (!existingAuthor) {
+        acc.push({ author: current.author, likes: current.likes });
+      } else {
+        existingAuthor.likes += current.likes;
+      }
+      return acc;
+    }, [])
+    .reduce((max, current) => (current.likes > max.likes ? current : max));
+};
+
 const totalLikes = (blogs) =>
   blogs.reduce((acc, current) => acc + current.likes, 0);
 
@@ -32,5 +47,6 @@ module.exports = {
   dummy,
   favoriteBlog,
   mostBlogs,
+  mostLikes,
   totalLikes,
 };
