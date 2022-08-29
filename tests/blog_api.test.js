@@ -43,4 +43,26 @@ test('blogs have unique identifiers defined', async () => {
   expect(response.body[0].id).toBeDefined();
 });
 
+test('a valid blog can be added', async () => {
+  const newBlog = {
+    title: 'Testing APIs',
+    author: 'Author McAuthorface',
+    url: '/testing-apis',
+    likes: 12345,
+  };
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(200)
+    .expect('Content-Type', /application\/json/);
+
+  const blogs = await Blog.find({});
+  const blogsAtEnd = blogs.map((blog) => blog.toJSON());
+  expect(blogsAtEnd).toHaveLength(initialBlogs.length + 1);
+
+  const title = blogsAtEnd.map((r) => r.title);
+  expect(title).toContain('Testing APIs');
+});
+
 afterAll(() => mongoose.connection.close());
