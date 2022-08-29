@@ -101,4 +101,19 @@ test('a valid blog can be removed', async () => {
   expect(blogsAtEnd).toHaveLength(initialBlogs.length - 1);
 });
 
+test('a valid blog can be updated', async () => {
+  let blogs = await Blog.find({});
+  const blogsAtStart = blogs.map((blog) => blog.toJSON());
+  const blogToUpdate = blogsAtStart[0];
+
+  await api
+    .put(`/api/blogs/${blogToUpdate.id}`)
+    .send({ likes: blogToUpdate.likes + 1 })
+    .expect(200);
+
+  blogs = await Blog.find({});
+  const blogsAtEnd = blogs.map((blog) => blog.toJSON());
+  expect(blogsAtEnd[0].likes).toBe(blogToUpdate.likes + 1);
+});
+
 afterAll(() => mongoose.connection.close());

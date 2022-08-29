@@ -16,6 +16,13 @@ blogsRouter.post('/', async (req, res, next) => {
   }
 });
 
+blogsRouter.put('/:id', async (req, res) => {
+  const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+  res.json(blog.toJSON());
+});
+
 blogsRouter.delete('/:id', async (req, res, next) => {
   try {
     await Blog.findByIdAndRemove(req.params.id);
