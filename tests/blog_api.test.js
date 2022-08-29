@@ -25,10 +25,7 @@ const initialBlogs = [
 
 beforeEach(async () => {
   await Blog.deleteMany({});
-  let blogObject = new Blog(initialBlogs[0]);
-  await blogObject.save();
-  blogObject = new Blog(initialBlogs[1]);
-  await blogObject.save();
+  await Blog.insertMany(initialBlogs);
 });
 
 test('blogs are returned as json', async () => {
@@ -60,9 +57,27 @@ test('a valid blog can be added', async () => {
   const blogs = await Blog.find({});
   const blogsAtEnd = blogs.map((blog) => blog.toJSON());
   expect(blogsAtEnd).toHaveLength(initialBlogs.length + 1);
-
-  const title = blogsAtEnd.map((r) => r.title);
+  const title = blogsAtEnd.map((blog) => blog.title);
   expect(title).toContain('Testing APIs');
+});
+
+test('blogs have default value on the likes property', async () => {
+  const newBlog = {
+    title: 'Testing APIs',
+    author: 'Author McAuthorface',
+    url: '/testing-apis',
+  };
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(200)
+    .expect('Content-Type', /application\/json/);
+
+  const blogs = await Blog.find({});
+  const blogsAtEnd = blogs.map((blog) => blog.toJSON());
+  const likes = blogsAtEnd.map((blog) => blog.likes);
+  expect(likes[likes.length - 1]).toBe(0);
 });
 
 afterAll(() => mongoose.connection.close());
