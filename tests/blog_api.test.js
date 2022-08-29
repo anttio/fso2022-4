@@ -93,4 +93,12 @@ test('blog without title and url are not added', async () => {
   expect(blogsAtEnd).toHaveLength(initialBlogs.length);
 });
 
+test('a valid blog can be removed', async () => {
+  await api.delete('/api/blogs/' + initialBlogs[0]._id);
+
+  const blogs = await Blog.find({});
+  const blogsAtEnd = blogs.map((blog) => blog.toJSON());
+  expect(blogsAtEnd).toHaveLength(initialBlogs.length - 1);
+});
+
 afterAll(() => mongoose.connection.close());
