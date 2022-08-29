@@ -80,4 +80,17 @@ test('blogs have default value on the likes property', async () => {
   expect(likes[likes.length - 1]).toBe(0);
 });
 
+test('blog without title and url are not added', async () => {
+  const newBlog = {
+    author: 'Author McAuthorface',
+    likes: 12345,
+  };
+
+  await api.post('/api/blogs').send(newBlog).expect(400);
+
+  const blogs = await Blog.find({});
+  const blogsAtEnd = blogs.map((blog) => blog.toJSON());
+  expect(blogsAtEnd).toHaveLength(initialBlogs.length);
+});
+
 afterAll(() => mongoose.connection.close());
