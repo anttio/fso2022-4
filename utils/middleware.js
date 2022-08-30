@@ -1,4 +1,6 @@
+const jwt = require('jsonwebtoken');
 const logger = require('./logger');
+const User = require('../models/user');
 
 const requestLogger = (req, res, next) => {
   logger.info('Method:', req.method);
@@ -16,6 +18,18 @@ const tokenExtractor = (req, res, next) => {
   }
 
   next();
+};
+
+const userExtractor = (req, res, next) => {
+  if (req.token) {
+    jwt.verify(req.token, process.env.SECRET, async (error, decoded) => {
+      const user = await User.findById(decoded.id);
+      req.user = user;
+      next();
+    });
+  } else {
+    return res.status(401).json({ error: 'token missing' });
+  }
 };
 
 const unknownEndpoint = (req, res) => {
@@ -39,6 +53,7 @@ const errorHandler = (error, req, res, next) => {
 module.exports = {
   requestLogger,
   tokenExtractor,
+  userExtractor,
   unknownEndpoint,
   errorHandler,
 };
