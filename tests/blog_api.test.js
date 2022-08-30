@@ -3,6 +3,7 @@ const supertest = require('supertest');
 const app = require('../app');
 const api = supertest(app);
 const Blog = require('../models/blog');
+const User = require('../models/user');
 
 const initialBlogs = [
   {
@@ -114,6 +115,24 @@ test('a valid blog can be updated', async () => {
   blogs = await Blog.find({});
   const blogsAtEnd = blogs.map((blog) => blog.toJSON());
   expect(blogsAtEnd[0].likes).toBe(blogToUpdate.likes + 1);
+});
+
+test('invalid users are not created', async () => {
+  let users = await User.find({});
+  const usersAtStart = users.map((user) => user.toJSON());
+
+  const invalidUser = {
+    // username missing
+    name: 'User McUserface',
+    password: '12', // too short password
+  };
+
+  await api.post('/api/users').send(invalidUser).expect(400);
+
+  users = await User.find({});
+  const usersAtEnd = users.map((user) => user.toJSON());
+
+  expect(usersAtEnd).toHaveLength(usersAtStart.length);
 });
 
 afterAll(() => mongoose.connection.close());
