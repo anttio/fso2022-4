@@ -24,9 +24,31 @@ const initialBlogs = [
   },
 ];
 
+let authToken;
+
 beforeEach(async () => {
   await Blog.deleteMany({});
   await Blog.insertMany(initialBlogs);
+
+  await User.deleteMany({});
+  await api
+    .post('/api/users')
+    .send({
+      username: 'mcuserface',
+      name: 'User McUserface',
+      password: 'notgoingtotell',
+    })
+    .set('Content-Type', 'application/json');
+
+  const user = await api
+    .post('/api/login')
+    .send({
+      username: 'mcuserface',
+      password: 'notgoingtotell',
+    })
+    .set('Content-Type', 'application/json');
+
+  authToken = `bearer ${user.body.token}`;
 });
 
 test('blogs are returned as json', async () => {
@@ -51,6 +73,7 @@ test('a valid blog can be added', async () => {
 
   await api
     .post('/api/blogs')
+    .set('Authorization', authToken)
     .send(newBlog)
     .expect(200)
     .expect('Content-Type', /application\/json/);
@@ -71,6 +94,7 @@ test('blogs have default value on the likes property', async () => {
 
   await api
     .post('/api/blogs')
+    .set('Authorization', authToken)
     .send(newBlog)
     .expect(200)
     .expect('Content-Type', /application\/json/);
@@ -87,19 +111,59 @@ test('blog without title and url are not added', async () => {
     likes: 12345,
   };
 
-  await api.post('/api/blogs').send(newBlog).expect(400);
+  await api
+    .post('/api/blogs')
+    .set('Authorization', authToken)
+    .send(newBlog)
+    .expect(400);
 
   const blogs = await Blog.find({});
   const blogsAtEnd = blogs.map((blog) => blog.toJSON());
   expect(blogsAtEnd).toHaveLength(initialBlogs.length);
 });
 
-test('a valid blog can be removed', async () => {
-  await api.delete('/api/blogs/' + initialBlogs[0]._id);
+test('blog without token are not added', async () => {
+  const newBlog = {
+    title: 'Testing APIs',
+    author: 'Author McAuthorface',
+    url: '/testing-apis',
+    likes: 12345,
+  };
 
-  const blogs = await Blog.find({});
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(401)
+    .expect('Content-Type', /application\/json/);
+});
+
+test('a valid blog can be removed', async () => {
+  const newBlog = {
+    title: 'Testing APIs',
+    author: 'Author McAuthorface',
+    url: '/testing-apis',
+    likes: 12345,
+  };
+
+  await api
+    .post('/api/blogs')
+    .set('Authorization', authToken)
+    .send(newBlog)
+    .expect(200)
+    .expect('Content-Type', /application\/json/);
+
+  let blogs = await Blog.find({});
+  const blogsAtStart = blogs.map((blog) => blog.toJSON());
+
+  const blogToRemove = blogsAtStart[blogsAtStart.length - 1];
+
+  await api
+    .delete('/api/blogs/' + blogToRemove.id)
+    .set('Authorization', authToken);
+
+  blogs = await Blog.find({});
   const blogsAtEnd = blogs.map((blog) => blog.toJSON());
-  expect(blogsAtEnd).toHaveLength(initialBlogs.length - 1);
+  expect(blogsAtEnd).toHaveLength(blogsAtStart.length - 1);
 });
 
 test('a valid blog can be updated', async () => {
