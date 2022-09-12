@@ -2,9 +2,16 @@ const blogsRouter = require('express').Router();
 const middleware = require('../utils/middleware');
 const Blog = require('../models/blog');
 
-blogsRouter.get('/', async (req, res) => {
-  const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 });
-  res.json(blogs);
+blogsRouter.get('/', async (req, res, next) => {
+  try {
+    const blogs = await Blog.find({}).populate('user', {
+      username: 1,
+      name: 1,
+    });
+    res.json(blogs);
+  } catch (exception) {
+    next(exception);
+  }
 });
 
 blogsRouter.post('/', middleware.userExtractor, async (req, res, next) => {
@@ -24,16 +31,20 @@ blogsRouter.post('/', middleware.userExtractor, async (req, res, next) => {
     await user.save();
 
     res.json(savedBlog);
-  } catch (e) {
-    next(e);
+  } catch (exception) {
+    next(exception);
   }
 });
 
-blogsRouter.put('/:id', async (req, res) => {
-  const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
-  res.json(blog.toJSON());
+blogsRouter.put('/:id', async (req, res, next) => {
+  try {
+    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.json(blog.toJSON());
+  } catch (exception) {
+    next(exception);
+  }
 });
 
 blogsRouter.delete('/:id', middleware.userExtractor, async (req, res, next) => {
@@ -45,8 +56,8 @@ blogsRouter.delete('/:id', middleware.userExtractor, async (req, res, next) => {
       await Blog.findByIdAndRemove(req.params.id);
       res.status(204).end();
     }
-  } catch (e) {
-    next(e);
+  } catch (exception) {
+    next(exception);
   }
 });
 
